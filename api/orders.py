@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.base import get_async_session
-from schemas.order import AddItemToOrderRequest, ErrorDetail, OrderItemResponse
-from services.order_service import (
+from exceptions import (
     InsufficientStockError,
     NomenclatureNotFoundError,
     OrderNotFoundError,
-    add_product_to_order,
 )
+from schemas.order import AddItemToOrderRequest, ErrorDetail, OrderItemResponse
+from services.order_service import add_product_to_order
 
 router = APIRouter(prefix="/orders", tags=["Заказы"])
 

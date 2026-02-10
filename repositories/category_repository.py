@@ -42,3 +42,12 @@ class CategoryRepository(BaseRepository[Category]):
             )
         )
         return result.scalar() or 0
+
+    async def get_nomenclature_counts_by_category(self) -> dict[int, int]:
+        """Подсчитать количество товаров по всем категориям (один запрос, GROUP BY)."""
+        result = await self._session.execute(
+            select(Nomenclature.category_id, func.count(Nomenclature.id))
+            .where(Nomenclature.category_id.isnot(None))
+            .group_by(Nomenclature.category_id)
+        )
+        return {row[0]: row[1] for row in result.all()}

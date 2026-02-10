@@ -15,20 +15,27 @@ async def list_categories(session: AsyncSession) -> list[CategoryResponse]:
 
 
 async def get_category_tree(session: AsyncSession) -> list[CategoryTreeItem]:
-    """Получить дерево категорий с подсчётом товаров в каждой."""
+    """Получить дерево категорий с подсчётом товаров в каждой (2 запроса вместо N)."""
     repo = CategoryRepository(session)
-    roots = await repo.get_roots()
+    all_categories = await repo.get_all_flat()
+    counts_by_category = await repo.get_nomenclature_counts_by_category()
 
-    async def build_node(cat: Category) -> CategoryTreeItem:
-        count = await repo.count_nomenclature_in_category(cat.id)
-        children = await repo.get_children(cat.id)
-        child_items = [await build_node(c) for c in children]
+    # Группируем по parent_id, дочерние отсортированы по name (порядок из get_all_flat)
+    children_by_parent: dict[int | None, list[Category]] = {}
+    for cat in all_categories:
+        children_by_parent.setdefault(cat.parent_id, []).append(cat)
+    for key in children_by_parent:
+        children_by_parent[key].sort(key=lambda c: c.name)
+
+    def build_node(cat: Category) -> CategoryTreeItem:
+        children = children_by_parent.get(cat.id, [])
         return CategoryTreeItem(
             id=cat.id,
             name=cat.name,
             parent_id=cat.parent_id,
-            children=child_items,
-            item_count=count,
+            children=[build_node(child) for child in children],
+            item_count=counts_by_category.get(cat.id, 0),
         )
 
-    return [await build_node(r) for r in roots]
+    roots = children_by_parent.get(None, [])
+    return [build_node(r) for r in roots]

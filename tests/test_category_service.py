@@ -45,25 +45,22 @@ async def test_list_categories_uses_repository_and_maps_to_schema(
 
 @pytest.mark.asyncio
 async def test_get_category_tree_builds_recursive_tree(session: AsyncSession) -> None:
-    """Проверяем построение дерева категорий и подсчёт товаров."""
+    """Проверяем построение дерева категорий и подсчёт товаров (2 запроса: все категории + счётчики)."""
     root = FakeCategory(id=1, name="Root", parent_id=None)
     child = FakeCategory(id=2, name="Child", parent_id=1)
 
     with patch("services.category_service.CategoryRepository") as repo_cls:
         repo = repo_cls.return_value
-        repo.get_roots = AsyncMock(return_value=[root])
-        repo.count_nomenclature_in_category = AsyncMock(
-            side_effect=lambda cid: 5 if cid == 1 else 2
+        repo.get_all_flat = AsyncMock(return_value=[root, child])
+        repo.get_nomenclature_counts_by_category = AsyncMock(
+            return_value={1: 5, 2: 2}
         )
 
-        async def get_children_mock(category_id: int):
-            if category_id == 1:
-                return [child]
-            return []
-
-        repo.get_children = AsyncMock(side_effect=get_children_mock)
-
         tree = await get_category_tree(session)
+
+        repo_cls.assert_called_once_with(session)
+        repo.get_all_flat.assert_awaited_once()
+        repo.get_nomenclature_counts_by_category.assert_awaited_once()
 
         assert len(tree) == 1
         root_node = tree[0]

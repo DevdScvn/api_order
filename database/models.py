@@ -1,8 +1,9 @@
 """Модели БД: дерево категорий, номенклатура, заказы и позиции заказа."""
 
+from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import Base
@@ -56,11 +57,15 @@ class Nomenclature(Base):
     """
 
     __tablename__ = "nomenclature"
+    __table_args__ = (
+        CheckConstraint("quantity >= 0", name="check_nomenclature_quantity_non_negative"),
+        CheckConstraint("price >= 0", name="check_nomenclature_price_non_negative"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(512), nullable=False, index=True)
-    quantity: Mapped[float] = mapped_column(Numeric(18, 4), nullable=False, default=0)
-    price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False, default=0)
+    price: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
 
     category_id: Mapped[int | None] = mapped_column(
         ForeignKey("categories.id", ondelete="SET NULL"),
@@ -118,6 +123,12 @@ class Order(Base):
     client_id: Mapped[int | None] = mapped_column(
         ForeignKey("clients.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
         index=True,
     )
 

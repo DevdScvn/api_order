@@ -6,15 +6,16 @@ from fastapi import FastAPI
 from api.categories import router as categories_router
 from api.nomenclature import router as nomenclature_router
 from api.orders import router as orders_router
-from database import init_db
+from database import db_helper, init_db
+from settings.config import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Создание таблиц БД при старте приложения."""
+    """Создание таблиц БД при старте, закрытие пула при остановке."""
     init_db()
     yield
-    # при остановке можно закрыть пулы и т.д.
+    await db_helper.dispose()
 
 
 app = FastAPI(
@@ -46,11 +47,11 @@ def root() -> dict[str, str]:
 
 
 def run_app() -> None:
-    """Запускает FastAPI-приложение через uvicorn на localhost:8000."""
+    """Запускает FastAPI-приложение через uvicorn."""
     uvicorn.run(
         "main:app",
-        host="127.0.0.1",
-        port=8000,
+        host=settings.run.host,
+        port=settings.run.port,
         reload=True,
     )
 

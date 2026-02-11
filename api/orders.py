@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.base import get_async_session
+from database.db_helper import db_helper
 from exceptions import (
     InsufficientStockError,
     NomenclatureNotFoundError,
@@ -37,7 +37,7 @@ router = APIRouter(prefix="/orders", tags=["Заказы"])
 )
 async def add_item_to_order(
     body: AddItemToOrderRequest,
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(db_helper.get_session),
 ) -> OrderItemResponse:
     """
     **Добавление товара в заказ.**

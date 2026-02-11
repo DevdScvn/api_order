@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.base import get_async_session
+from database.db_helper import db_helper
 from schemas.category import CategoryResponse, CategoryTreeItem
 from services.category_service import get_category_tree, list_categories
 
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/categories", tags=["Каталог / Дерево к
     description="Возвращает все категории (плоский список).",
 )
 async def list_categories_endpoint(
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(db_helper.get_session),
 ) -> list[CategoryResponse]:
     """GET: плоский список категорий."""
     return await list_categories(session)
@@ -30,7 +30,7 @@ async def list_categories_endpoint(
     description="Возвращает иерархическое дерево категорий с количеством товаров в каждой.",
 )
 async def category_tree_endpoint(
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(db_helper.get_session),
 ) -> list[CategoryTreeItem]:
     """GET: дерево категорий с подсчётом товаров (как на картинке)."""
     return await get_category_tree(session)

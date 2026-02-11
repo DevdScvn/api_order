@@ -37,10 +37,13 @@ curl -X POST "http://localhost:8000/api/orders/items" \
 
 ```bash
 uv sync
+cp .env.example .env   # опционально: настройка через переменные окружения
 uv run python scripts/init_db.py      # создание таблиц
 uv run python scripts/seed_test_data.py  # тестовые данные (дерево категорий как на картинке)
-uv run uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uv run uvicorn main:app --reload
 ```
+
+URL БД и порт настраиваются через `.env` (см. `.env.example`). По умолчанию — SQLite `./catalog.db`, порт 8000.
 
 > **Важно:** при изменении схемы БД (добавление таблиц) удалите `catalog.db` и заново выполните `init_db` и `seed_test_data`.
 
@@ -56,5 +59,11 @@ API будет доступен на **http://localhost:8000**. База SQLite 
 
 - **FastAPI** — REST-API, async-эндпоинты, автодокументация
 - **SQLAlchemy 2 (async)** — модели и сессии БД
-- **Pydantic** — валидация запросов/ответов
+- **Pydantic + pydantic-settings** — валидация и конфигурация из `.env`
 - **Docker / docker-compose** — контейнеризация
+
+## Структура работы с БД
+
+- `database/db_helper.py` — `DatabaseHelper`: engine, session_factory, `get_session()` (с commit/rollback), `dispose()` при shutdown
+- `database/base.py` — `Base`, sync engine для скриптов (`init_db`, `seed_test_data`)
+- Конфигурация: `settings/config.py`, переменные `DATABASE_URL`, `RUN_HOST`, `RUN_PORT` и др.

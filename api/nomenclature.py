@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.base import get_async_session
+from database.db_helper import db_helper
 from schemas.nomenclature import NomenclatureResponse
 from services.nomenclature_service import list_nomenclature
 
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/nomenclature", tags=["Номенклатура (то
     description="Возвращает все товары (номенклатуру), которые есть в БД.",
 )
 async def list_nomenclature_endpoint(
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(db_helper.get_session),
 ) -> list[NomenclatureResponse]:
     """GET-эндпоинт: отображение всех товаров, которые уже есть в БД."""
     return await list_nomenclature(session)

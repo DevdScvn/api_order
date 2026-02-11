@@ -8,8 +8,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from database import init_db
+from settings.config import settings
 
 if __name__ == "__main__":
-    # По умолчанию SQLite в корне проекта
     init_db()
-    print("Таблицы созданы: catalog.db")
+    print(f"Таблицы созданы: {settings.database_url}")
